@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,14 +18,14 @@ var (
 )
 
 func main() {
-	responce, err := getMassaWebsite(massaAddress, nodeAddress)
+	_, err := getMassaWebsite(massaAddress, nodeAddress)
 	if err != nil {
 		panic(err)
 	}
-	err = responceToZipFile(responce)
-	if err != nil {
-		panic(err)
-	}
+	// err = responceToZipFile(responce)
+	// if err != nil {
+	// 	panic(err)
+	// }
 	err = unZipFile("site1.zip")
 	if err != nil {
 		panic(err)
@@ -50,16 +51,30 @@ func getMassaWebsite(massaAddress string, nodeAddress string) (*http.Response, e
 
 type responceBodyGetDatastoreEntries struct {
 	Jsonrpc 	float64 		`json:"jsonrpc"`
-	Result		[]interface{}	`json:"result"`
+	Result		[]result		`json:"result"`
 	Id			int				`json:"id"`
-} 
+}
+
+type result struct {
+	CandidateValue []byte `json:"candidate_value"`
+}
 
 func responceToZipFile(responce *http.Response) error {
-	// TODO
+	body := new(responceBodyGetDatastoreEntries)
+	json.NewDecoder(responce.Body).Decode(body)
 
-	// var body responceBodyGetDatastoreEntries
-	// json.NewDecoder(responce.Body).Decode(body)
-	// fmt.Printf("%v\n", body.Result...)
+	out, err := os.Create("website.zip")
+    if err != nil {
+        return fmt.Errorf("err: %s", err)
+    }
+    defer out.Close()
+
+	reader := bytes.NewReader(body.Result[0].CandidateValue)
+
+    _, err = io.Copy(out, reader)
+    if err != nil {
+		return fmt.Errorf("err: %s", err)
+	}
 
 	return nil
 }

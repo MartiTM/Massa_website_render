@@ -1,8 +1,14 @@
 package main
 
 import (
+	"archive/zip"
 	"bytes"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 var (
@@ -15,7 +21,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	responceToZipFile(responce)
+	err = responceToZipFile(responce)
+	if err != nil {
+		panic(err)
+	}
+	unZipFile("site1.zip")
 }
 
 func getMassaWebsite(massaAddress string, nodeAddress string) (*http.Response, error) {
@@ -42,10 +52,54 @@ type responceBodyGetDatastoreEntries struct {
 
 func responceToZipFile(responce *http.Response) error {
 	// TODO
-	
+
 	// var body responceBodyGetDatastoreEntries
 	// json.NewDecoder(responce.Body).Decode(body)
 	// fmt.Printf("%v\n", body.Result...)
 
+	return nil
+}
+
+func unZipFile(fileName string) error {
+	// https://golang.cafe/blog/golang-unzip-file-example.html
+	dirNameUnZip := "output"
+    archive, err := zip.OpenReader(fileName)
+    if err != nil {
+        panic(err)
+    }
+    defer archive.Close()
+
+    for _, f := range archive.File {
+        filePath := filepath.Join(dirNameUnZip, f.Name)
+
+        if !strings.HasPrefix(filePath, filepath.Clean(dirNameUnZip)+string(os.PathSeparator)) {
+            return fmt.Errorf("invalid file path")
+        }
+        if f.FileInfo().IsDir() {
+            os.MkdirAll(filePath, os.ModePerm)
+            continue
+        }
+
+        if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
+            panic(err)
+        }
+
+        dstFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+        if err != nil {
+            panic(err)
+        }
+
+        fileInArchive, err := f.Open()
+        if err != nil {
+            panic(err)
+        }
+
+        if _, err := io.Copy(dstFile, fileInArchive); err != nil {
+            panic(err)
+        }
+
+        dstFile.Close()
+        fileInArchive.Close()
+    }
 	return nil
 }

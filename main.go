@@ -11,10 +11,14 @@ var (
 )
 
 func main() {
-	getMassaWebsite(massaAddress, nodeAddress)
+	responce, err := getMassaWebsite(massaAddress, nodeAddress)
+	if err != nil {
+		panic(err)
+	}
+	responceToZipFile(responce)
 }
 
-func getMassaWebsite(massaAddress string, nodeAddress string) (*http.Response, error){
+func getMassaWebsite(massaAddress string, nodeAddress string) (*http.Response, error) {
 	// we are looking for the key "massa_web" in decimal
 	body := []byte(`{
 		"jsonrpc":"2.0",
@@ -28,4 +32,20 @@ func getMassaWebsite(massaAddress string, nodeAddress string) (*http.Response, e
 	resp, err := http.Post(nodeAddress, "application/json", bytes.NewBuffer(body))
 
 	return resp, err
+}
+
+type responceBodyGetDatastoreEntries struct {
+	Jsonrpc 	float64 		`json:"jsonrpc"`
+	Result		[]interface{}	`json:"result"`
+	Id			int				`json:"id"`
+} 
+
+func responceToZipFile(responce *http.Response) error {
+	// TODO
+	
+	// var body responceBodyGetDatastoreEntries
+	// json.NewDecoder(responce.Body).Decode(body)
+	// fmt.Printf("%v\n", body.Result...)
+
+	return nil
 }

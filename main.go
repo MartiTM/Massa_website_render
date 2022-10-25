@@ -25,7 +25,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	unZipFile("site1.zip")
+	err = unZipFile("site1.zip")
+	if err != nil {
+		panic(err)
+	}
+	runHttpServe()
 }
 
 func getMassaWebsite(massaAddress string, nodeAddress string) (*http.Response, error) {
@@ -102,4 +106,11 @@ func unZipFile(fileName string) error {
         fileInArchive.Close()
     }
 	return nil
+}
+
+func runHttpServe() {
+	http.Handle("/", http.StripPrefix("/",http.FileServer(http.Dir("./output"))))
+
+	fmt.Printf("The %s website is available at the following address http://localhost:3000", massaAddress)
+	http.ListenAndServe(":3000", nil)
 }

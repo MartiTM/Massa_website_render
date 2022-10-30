@@ -50,9 +50,9 @@ func getMassaWebsite(massaAddress string, nodeAddress string) (*http.Response, e
 }
 
 type responceBodyGetDatastoreEntries struct {
-	Jsonrpc 	float64 		`json:"jsonrpc"`
-	Result		[]result		`json:"result"`
-	Id			int				`json:"id"`
+	Jsonrpc float64  `json:"jsonrpc"`
+	Result  []result `json:"result"`
+	Id      int      `json:"id"`
 }
 
 type result struct {
@@ -64,15 +64,15 @@ func responceToZipFile(responce *http.Response) error {
 	json.NewDecoder(responce.Body).Decode(body)
 
 	out, err := os.Create("website.zip")
-    if err != nil {
-        return fmt.Errorf("err: %s", err)
-    }
-    defer out.Close()
+	if err != nil {
+		return fmt.Errorf("err: %s", err)
+	}
+	defer out.Close()
 
 	reader := bytes.NewReader(body.Result[0].CandidateValue)
 
-    _, err = io.Copy(out, reader)
-    if err != nil {
+	_, err = io.Copy(out, reader)
+	if err != nil {
 		return fmt.Errorf("err: %s", err)
 	}
 
@@ -82,49 +82,49 @@ func responceToZipFile(responce *http.Response) error {
 func unZipFile(fileName string) error {
 	// https://golang.cafe/blog/golang-unzip-file-example.html
 	dirNameUnZip := "output"
-    archive, err := zip.OpenReader(fileName)
-    if err != nil {
-        panic(err)
-    }
-    defer archive.Close()
+	archive, err := zip.OpenReader(fileName)
+	if err != nil {
+		panic(err)
+	}
+	defer archive.Close()
 
-    for _, f := range archive.File {
-        filePath := filepath.Join(dirNameUnZip, f.Name)
+	for _, f := range archive.File {
+		filePath := filepath.Join(dirNameUnZip, f.Name)
 
-        if !strings.HasPrefix(filePath, filepath.Clean(dirNameUnZip)+string(os.PathSeparator)) {
-            return fmt.Errorf("invalid file path")
-        }
-        if f.FileInfo().IsDir() {
-            os.MkdirAll(filePath, os.ModePerm)
-            continue
-        }
+		if !strings.HasPrefix(filePath, filepath.Clean(dirNameUnZip)+string(os.PathSeparator)) {
+			return fmt.Errorf("invalid file path")
+		}
+		if f.FileInfo().IsDir() {
+			os.MkdirAll(filePath, os.ModePerm)
+			continue
+		}
 
-        if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
-            panic(err)
-        }
+		if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
+			panic(err)
+		}
 
-        dstFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-        if err != nil {
-            panic(err)
-        }
+		dstFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		if err != nil {
+			panic(err)
+		}
 
-        fileInArchive, err := f.Open()
-        if err != nil {
-            panic(err)
-        }
+		fileInArchive, err := f.Open()
+		if err != nil {
+			panic(err)
+		}
 
-        if _, err := io.Copy(dstFile, fileInArchive); err != nil {
-            panic(err)
-        }
+		if _, err := io.Copy(dstFile, fileInArchive); err != nil {
+			panic(err)
+		}
 
-        dstFile.Close()
-        fileInArchive.Close()
-    }
+		dstFile.Close()
+		fileInArchive.Close()
+	}
 	return nil
 }
 
 func runHttpServe() {
-	http.Handle("/", http.StripPrefix("/",http.FileServer(http.Dir("./output"))))
+	http.Handle("/", http.StripPrefix("/", http.FileServer(http.Dir("./output"))))
 
 	fmt.Printf("The %s website is available at the following address http://localhost:3000", massaAddress)
 	http.ListenAndServe(":3000", nil)
